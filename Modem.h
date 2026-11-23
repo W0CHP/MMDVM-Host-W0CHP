@@ -50,8 +50,8 @@ public:
 
 	void setPort(IModemPort* port);
 	void setRFParams(unsigned int rxFrequency, int rxOffset, unsigned int txFrequency, int txOffset, int txDCOffset, int rxDCOffset, float rfLevel, unsigned int pocsagFrequency);
-	void setModeParams(bool dstarEnabled, bool dmrEnabled, bool ysfEnabled, bool p25Enabled, bool nxdnEnabled, bool pocsagEnabled, bool fmEnabled);
-	void setLevels(float rxLevel, float cwIdTXLevel, float dstarTXLevel, float dmrTXLevel, float ysfTXLevel, float p25TXLevel, float nxdnTXLevel, float pocsagLevel, float fmTXLevel);
+	void setModeParams(bool dstarEnabled, bool dmrEnabled, bool ysfEnabled, bool p25Enabled, bool nxdnEnabled, bool m17Enabled, bool pocsagEnabled, bool fmEnabled);
+	void setLevels(float rxLevel, float cwIdTXLevel, float dstarTXLevel, float dmrTXLevel, float ysfTXLevel, float p25TXLevel, float nxdnTXLevel, float m17TXLevel, float pocsagLevel, float fmTXLevel);
 
 #if defined(USE_DMR)
 	void setDMRParams(unsigned int colorCode);
@@ -65,6 +65,9 @@ public:
 #endif
 #if defined(USE_NXDN)
 	void setNXDNParams(unsigned int txHang);
+#endif
+#if defined(USE_M17)
+	void setM17Params(unsigned int txHang);
 #endif
 	void setTransparentDataParams(unsigned int sendFrameType);
 
@@ -82,6 +85,7 @@ public:
 	bool hasYSF() const;
 	bool hasP25() const;
 	bool hasNXDN() const;
+	bool hasM17() const;
 	bool hasPOCSAG() const;
 	bool hasFM() const;
 
@@ -110,6 +114,9 @@ public:
 #if defined(USE_NXDN)
 	unsigned int readNXDNData(unsigned char* data);
 #endif
+#if defined(USE_M17)
+	unsigned int readM17Data(unsigned char* data);
+#endif
 #if defined(USE_FM)
 	unsigned int readFMData(unsigned char* data);
 #endif
@@ -129,6 +136,9 @@ public:
 #endif
 #if defined(USE_NXDN)
 	bool hasNXDNSpace() const;
+#endif
+#if defined(USE_M17)
+	bool hasM17Space() const;
 #endif
 #if defined(USE_POCSAG)
 	bool hasPOCSAGSpace() const;
@@ -161,6 +171,9 @@ public:
 #if defined(USE_NXDN)
 	bool writeNXDNData(const unsigned char* data, unsigned int length);
 #endif
+#if defined(USE_M17)
+	bool writeM17Data(const unsigned char* data, unsigned int length);
+#endif
 #if defined(USE_POCSAG)
 	bool writePOCSAGData(const unsigned char* data, unsigned int length);
 #endif
@@ -182,6 +195,9 @@ public:
 #endif
 #if defined(USE_NXDN)
 	bool writeNXDNInfo(const char* source, bool group, unsigned int dest, const char* type);
+#endif
+#if defined(USE_M17)
+	bool writeM17Info(const char* source, const char* dest, const char* type);
 #endif
 #if defined(USE_POCSAG)
 	bool writePOCSAGInfo(unsigned int ric, const std::string& message);
@@ -234,6 +250,9 @@ private:
 #if defined(USE_NXDN)
 	unsigned int               m_nxdnTXHang;
 #endif
+#if defined(USE_M17)
+	unsigned int               m_m17TXHang;
+#endif
 	bool                       m_duplex;
 	bool                       m_rxInvert;
 	bool                       m_txInvert;
@@ -258,6 +277,9 @@ private:
 #endif
 #if defined(USE_NXDN)
 	float                      m_nxdnTXLevel;
+#endif
+#if defined(USE_M17)
+	float                      m_m17TXLevel;
 #endif
 #if defined(USE_POCSAG)
 	float                      m_pocsagTXLevel;
@@ -290,6 +312,9 @@ private:
 #endif
 #if defined(USE_NXDN)
 	bool                       m_nxdnEnabled;
+#endif
+#if defined(USE_M17)
+	bool                       m_m17Enabled;
 #endif
 #if defined(USE_POCSAG)
 	bool                       m_pocsagEnabled;
@@ -328,6 +353,10 @@ private:
 	CRingBuffer<unsigned char> m_rxNXDNData;
 	CRingBuffer<unsigned char> m_txNXDNData;
 #endif
+#if defined(USE_M17)
+	CRingBuffer<unsigned char> m_rxM17Data;
+	CRingBuffer<unsigned char> m_txM17Data;
+#endif
 #if defined(USE_POCSAG)
 	CRingBuffer<unsigned char> m_txPOCSAGData;
 #endif
@@ -358,6 +387,9 @@ private:
 #endif
 #if defined(USE_NXDN)
 	unsigned int               m_nxdnSpace;
+#endif
+#if defined(USE_M17)
+	unsigned int               m_m17Space;
 #endif
 #if defined(USE_POCSAG)
 	unsigned int               m_pocsagSpace;

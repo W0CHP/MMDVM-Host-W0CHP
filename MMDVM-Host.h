@@ -30,10 +30,12 @@
 #include "YSFControl.h"
 #include "P25Control.h"
 #include "NXDNControl.h"
+#include "M17Control.h"
 #include "NXDNLookup.h"
 #include "YSFNetwork.h"
 #include "P25Network.h"
 #include "DMRNetwork.h"
+#include "M17Network.h"
 #include "FMNetwork.h"
 #include "DMRLookup.h"
 #include "FMControl.h"
@@ -77,6 +79,9 @@ private:
 #if defined(USE_NXDN)
 	CNXDNControl*   m_nxdn;
 #endif
+#if defined(USE_M17)
+	CM17Control*    m_m17;
+#endif
 #if defined(USE_POCSAG)
 	CPOCSAGControl* m_pocsag;
 #endif
@@ -97,6 +102,9 @@ private:
 #endif
 #if defined(USE_NXDN)
 	INXDNNetwork*   m_nxdnNetwork;
+#endif
+#if defined(USE_M17)
+	CM17Network*    m_m17Network;
 #endif
 #if defined(USE_POCSAG)
 	CPOCSAGNetwork* m_pocsagNetwork;
@@ -120,6 +128,9 @@ private:
 #if defined(USE_NXDN)
 	unsigned int    m_nxdnRFModeHang;
 #endif
+#if defined(USE_M17)
+	unsigned int    m_m17RFModeHang;
+#endif
 #if defined(USE_FM)
 	unsigned int    m_fmRFModeHang;
 #endif
@@ -137,6 +148,9 @@ private:
 #endif
 #if defined(USE_NXDN)
 	unsigned int    m_nxdnNetModeHang;
+#endif
+#if defined(USE_M17)
+	unsigned int    m_m17NetModeHang;
 #endif
 #if defined(USE_POCSAG)
 	unsigned int    m_pocsagNetModeHang;
@@ -156,6 +170,7 @@ private:
 	bool            m_ysfEnabled;
 	bool            m_p25Enabled;
 	bool            m_nxdnEnabled;
+	bool            m_m17Enabled;
 	bool            m_pocsagEnabled;
 	bool            m_fmEnabled;
 	bool            m_listenOnly;
@@ -195,6 +210,9 @@ private:
 #endif
 #if defined(USE_NXDN)
 	bool createNXDNNetwork();
+#endif
+#if defined(USE_M17)
+	bool createM17Network();
 #endif
 #if defined(USE_POCSAG)
 	bool createPOCSAGNetwork();
