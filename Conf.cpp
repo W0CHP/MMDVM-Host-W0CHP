@@ -623,6 +623,8 @@ bool CConf::read()
 			else if (::strcmp(key, "Time") == 0)
 				m_nxdnIdLookupTime = (unsigned int)::atoi(value);
 #endif
+		} else if (section == SECTION::MODEM && m_lights.setKey(key, value)) {
+			// WPSD: LightsOff ... LightsOffDays (see Lights.h)
 		} else if (section == SECTION::MODEM && modeOffsetKey(key, m_modeRXOffset, m_modeTXOffset, value)) {
 			// WPSD: D-StarRXOffset ... M17TXOffset (see modeOffsetKey)
 		} else if (section == SECTION::MODEM) {
@@ -2429,4 +2431,14 @@ int CConf::getModeRXOffset(unsigned int mode) const
 int CConf::getModeTXOffset(unsigned int mode) const
 {
 	return mode < MODE_OFFSETS ? m_modeTXOffset[mode] : 0;
+}
+
+const CLights& CConf::getLights() const
+{
+	return m_lights;
+}
+
+std::string CConf::getFile() const
+{
+	return m_file;
 }

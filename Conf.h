@@ -25,6 +25,7 @@
 #include <cstdint>
 
 #include "Defines.h"
+#include "Lights.h"
 
 class CConf
 {
@@ -219,6 +220,11 @@ public:
 	// Fusion, P25, NXDN, M17).
 	int          getModeRXOffset(unsigned int mode) const;
 	int          getModeTXOffset(unsigned int mode) const;
+
+	// WPSD: how the modem's lights work ([Modem], see Lights.h), and the
+	// file, read again for them by the "lights" remote command.
+	const CLights& getLights() const;
+	std::string  getFile() const;
 	unsigned int getM17CAN() const;
 	bool         getM17SelfOnly() const;
 	bool         getM17AllowEncryption() const;
@@ -536,6 +542,7 @@ private:
 	bool         m_m17Enabled;
 	int          m_modeRXOffset[MODE_OFFSETS];
 	int          m_modeTXOffset[MODE_OFFSETS];
+	CLights      m_lights;
 	unsigned int m_m17CAN;
 	bool         m_m17SelfOnly;
 	bool         m_m17AllowEncryption;

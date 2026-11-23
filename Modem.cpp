@@ -52,6 +52,7 @@ const unsigned char MMDVM_SET_CONFIG  = 0x02U;
 const unsigned char MMDVM_SET_MODE    = 0x03U;
 const unsigned char MMDVM_SET_FREQ    = 0x04U;
 const unsigned char MMDVM_SET_OFFSETS = 0x0EU;  // WPSD MMDVM_HS (ModeOffsets)
+const unsigned char MMDVM_SET_LIGHTS  = 0x0FU;  // WPSD MMDVM_HS (Lights)
 
 const unsigned char MMDVM_SEND_CWID   = 0x0AU;
 
@@ -358,6 +359,8 @@ m_serialDataLen(0U)
 {
 	m_buffer = new unsigned char[BUFFER_LENGTH];
 
+	m_lightsDark = false;
+
 	for (unsigned int i = 0U; i < MODE_OFFSETS; i++)
 		m_modeRXOffset[i] = m_modeTXOffset[i] = 0;
 }
@@ -583,6 +586,11 @@ bool CModem::open()
 		}
 	}
 #endif
+
+	// WPSD: the lights, to firmware that says Lights. One that NAKs them
+	// still runs, its lights as its build set them.
+	if (m_description.find(" Lights") != std::string::npos && !sendLights(true))
+		LogWarning("The modem refused the lights settings; its lights work as its firmware was built");
 
 	m_statusTimer.start();
 
@@ -3004,6 +3012,68 @@ bool CModem::setFrequency()
 	}
 
 	return true;
+}
+
+void CModem::setLights(const CLights& lights)
+{
+	m_lights = lights;
+
+	if (m_port != nullptr && m_description.find(" Lights") != std::string::npos)
+		sendLights(false);
+}
+
+void CModem::setLightsDark(bool dark)
+{
+	if (dark == m_lightsDark)
+		return;
+
+	m_lightsDark = dark;
+
+	if (m_port != nullptr && m_description.find(" Lights") != std::string::npos)
+		sendLights(false);
+}
+
+// WPSD: MMDVM_SET_LIGHTS, nine bytes (see Lights.h and the firmware's
+// CIO::setLights). wait: as the modem opens, for its ACK; later, sent
+// alone, its ACK or NAK read by clock() like any other.
+bool CModem::sendLights(bool wait)
+{
+	assert(m_port != nullptr);
+
+	unsigned char buffer[3U + 9U];
+
+	buffer[0U] = MMDVM_FRAME_START;
+	buffer[1U] = sizeof(buffer);
+	buffer[2U] = MMDVM_SET_LIGHTS;
+	m_lights.bytes(buffer + 3U, m_lightsDark);
+
+	int ret = m_port->write(buffer, sizeof(buffer));
+	if (ret != int(sizeof(buffer)))
+		return false;
+
+	LogInfo("Lights: %s", m_lights.describe(m_lightsDark).c_str());
+
+	if (!wait)
+		return true;
+
+	unsigned int count = 0U;
+	RESP_TYPE_MMDVM resp;
+	do {
+		CThread::sleep(10U);
+
+		resp = getResponse();
+		if ((resp == RESP_TYPE_MMDVM::OK) && (m_buffer[2U] != MMDVM_ACK) && (m_buffer[2U] != MMDVM_NAK)) {
+			count++;
+			if (count >= MAX_RESPONSES) {
+				LogError("The MMDVM is not responding to the SET_LIGHTS command");
+				return false;
+			}
+		}
+	} while ((resp == RESP_TYPE_MMDVM::OK) && (m_buffer[2U] != MMDVM_ACK) && (m_buffer[2U] != MMDVM_NAK));
+
+	// Only a NAK is a refusal, as for upstream's commands: an ACK not here
+	// yet is read by clock() like any other.
+	return !(resp == RESP_TYPE_MMDVM::OK && m_buffer[2U] == MMDVM_NAK);
 }
 
 // WPSD: MMDVM_SET_OFFSETS, sent after SET_FREQ to firmware that says

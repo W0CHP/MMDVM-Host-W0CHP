@@ -142,6 +142,9 @@ int main(int argc, char** argv)
 CMMDVMHost::CMMDVMHost(const std::string& confFile) :
 m_conf(confFile),
 m_modem(nullptr),
+m_lights(),
+m_lightsCheck(0U),
+m_lightsZone(),
 #if defined(USE_DSTAR)
 m_dstar(nullptr),
 #endif
@@ -1333,6 +1336,13 @@ int CMMDVMHost::run()
 
 		m_modem->clock(ms);
 
+		// WPSD: the lights' schedule, looked at each second.
+		m_lightsCheck += ms;
+		if (m_lightsCheck >= 1000U) {
+			m_lightsCheck = 0U;
+			m_modem->setLightsDark(lightsDarkNow());
+		}
+
 		m_serialTimer.clock(ms);
 		if (m_serialTimer.isRunning() && m_serialTimer.hasExpired()) {
 			unsigned int length = m_serialLength - m_serialStart;
@@ -1817,6 +1827,12 @@ bool CMMDVMHost::createModem()
 			modeTX[i] = m_conf.getModeTXOffset(i);
 		}
 		m_modem->setModeOffsets(modeRX, modeTX);
+	}
+	{
+		// WPSD: the lights, the schedule's as of now (run() keeps it).
+		m_lights = m_conf.getLights();
+		m_modem->setLightsDark(lightsDarkNow());
+		m_modem->setLights(m_lights);
 	}
 #if defined(USE_DMR)
 	m_modem->setDMRParams(colorCode);
@@ -3415,6 +3431,19 @@ void CMMDVMHost::remoteControl(const std::string& commandString)
 		case REMOTE_COMMAND::LISTEN_ON:
 			setListenOnly(true);
 			break;
+		case REMOTE_COMMAND::LIGHTS: {
+				// WPSD: the lights from the settings file as it is now,
+				// sent at once (WPSD writes it, then sends "lights").
+				CConf conf(m_conf.getFile());
+				if (conf.read()) {
+					m_lights = conf.getLights();
+					m_modem->setLightsDark(lightsDarkNow());
+					m_modem->setLights(m_lights);
+				} else {
+					LogWarning("Could not read %s again for the lights", m_conf.getFile().c_str());
+				}
+			}
+			break;
 		case REMOTE_COMMAND::LISTEN_OFF:
 			setListenOnly(false);
 			break;
@@ -3658,4 +3687,25 @@ void CMMDVMHost::onQSOInfo(const unsigned char* message, unsigned int length)
 
 	if (host->m_modem != nullptr)
 		host->m_modem->writeQSOInfo(message, length);
+}
+
+// WPSD: whether the lights' schedule has them dark now (local time).
+bool CMMDVMHost::lightsDarkNow()
+{
+	// The schedule's time zone: the system clock is UTC. Nothing else in
+	// MMDVM-Host reads local time (its log and timestamps are UTC).
+	if (m_lights.zone() != m_lightsZone) {
+		m_lightsZone = m_lights.zone();
+		if (m_lightsZone.empty())
+			::unsetenv("TZ");
+		else
+			::setenv("TZ", m_lightsZone.c_str(), 1);
+		::tzset();
+	}
+
+	time_t now = ::time(nullptr);
+	struct tm local;
+	::localtime_r(&now, &local);
+
+	return m_lights.scheduledDark(local);
 }
