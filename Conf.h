@@ -24,6 +24,8 @@
 
 #include <cstdint>
 
+#include "Defines.h"
+
 class CConf
 {
 public:
@@ -212,6 +214,11 @@ public:
 #if defined(USE_M17)
 	// The M17 section
 	bool         getM17Enabled() const;
+
+	// WPSD: per-mode offsets, by MODE_OFFSETS index (D-Star, DMR, System
+	// Fusion, P25, NXDN, M17).
+	int          getModeRXOffset(unsigned int mode) const;
+	int          getModeTXOffset(unsigned int mode) const;
 	unsigned int getM17CAN() const;
 	bool         getM17SelfOnly() const;
 	bool         getM17AllowEncryption() const;
@@ -527,6 +534,8 @@ private:
 
 #if defined(USE_M17)
 	bool         m_m17Enabled;
+	int          m_modeRXOffset[MODE_OFFSETS];
+	int          m_modeTXOffset[MODE_OFFSETS];
 	unsigned int m_m17CAN;
 	bool         m_m17SelfOnly;
 	bool         m_m17AllowEncryption;
